@@ -1,0 +1,427 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+x-polytrack-multiplayer:
+  protocolVersion: "0.6.0-beta2"
+  hostWebSocketPath: /v6/multiplayer/host
+  joinWebSocketPath: /v6/multiplayer/join
+  inviteCodeDigits: 4
+  maxPlayers: 32
+  playerCountIncludesHost: true
+  hostMessages: [createInvite, acceptJoin, declineJoin, iceCandidate]
+  joinMessages: [offer, iceCandidate]
+tags:
+  - name: health
+    description: Health operations
+  - name: leaderboard
+    description: Website Polytrack leaderboard operations
+  - name: multiplayer
+    description: PolyTrack multiplayer connectivity operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /v6/iceServers:
+    get:
+      operationId: getIceServers
+      tags: [multiplayer]
+      summary: Get ICE servers for PolyTrack peer connections
+      parameters:
+        - $ref: "#/components/parameters/PolyTrackVersion"
+      responses:
+        "200":
+          description: WebRTC ICE servers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/IceServer"
+        "400":
+          description: Unsupported PolyTrack version
+        "429":
+          description: Too many ICE credential requests
+        "502":
+          description: ICE credential provider or configuration unavailable
+  /v6/leaderboard:
+    get:
+      operationId: getLeaderboard
+      tags: [leaderboard]
+      summary: List website leaderboard records
+      parameters:
+        - $ref: "#/components/parameters/TrackId"
+        - $ref: "#/components/parameters/Skip"
+        - $ref: "#/components/parameters/Amount"
+        - $ref: "#/components/parameters/OnlyVerified"
+        - $ref: "#/components/parameters/UserTokenHash"
+      responses:
+        "200":
+          description: Leaderboard page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaderboardPage"
+    post:
+      operationId: submitLeaderboardRecord
+      tags: [leaderboard]
+      summary: Submit an eligible website leaderboard record
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/LeaderboardSubmission"
+      responses:
+        "200":
+          description: Upload result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaderboardUploadResult"
+        "400":
+          description: Invalid record
+    delete:
+      operationId: deleteLeaderboardRecord
+      tags: [leaderboard]
+      summary: Delete the caller's leaderboard record for one track
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/LeaderboardDeletion"
+      responses:
+        "200":
+          description: Number of records deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaderboardDeletionResult"
+        "400":
+          description: Invalid deletion request
+  /v6/leaderboardNickname:
+    post:
+      operationId: updateLeaderboardNickname
+      tags: [leaderboard]
+      summary: Update a player's name across their leaderboard records
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/LeaderboardNicknameUpdate"
+      responses:
+        "200":
+          description: Nickname update result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaderboardNicknameUpdateResult"
+        "400":
+          description: Invalid nickname update
+  /v6/leaderboardUserEntry:
+    get:
+      operationId: getLeaderboardUserEntry
+      tags: [leaderboard]
+      summary: Find a player's website leaderboard record
+      parameters:
+        - $ref: "#/components/parameters/TrackId"
+        - $ref: "#/components/parameters/OnlyVerified"
+        - $ref: "#/components/parameters/UserTokenHash"
+      responses:
+        "200":
+          description: User record or null
+          content:
+            application/json:
+              schema:
+                nullable: true
+                $ref: "#/components/schemas/LeaderboardUserEntry"
+  /v6/user:
+    get:
+      operationId: getPolyTrackUser
+      tags: [leaderboard]
+      summary: Look up a PolyTrack profile synchronized with the website leaderboard
+      parameters:
+        - $ref: "#/components/parameters/PolyTrackVersion"
+        - name: userToken
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 4096
+      responses:
+        "200":
+          description: Synchronized profile or null for local-only profiles
+          content:
+            application/json:
+              schema:
+                nullable: true
+                $ref: "#/components/schemas/PolyTrackUserProfile"
+        "400":
+          description: Invalid user lookup
+  /v6/trackOfTheWeek:
+    get:
+      operationId: getTrackOfTheWeek
+      tags: [track-of-the-week]
+      summary: Return this week's bundled community track
+      description: The selected track changes at Monday 00:00 UTC, independent of local timezones.
+      parameters:
+        - name: version
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: ["0.6.3"]
+      responses:
+        "200":
+          description: Current weekly track and its expiry time
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrackOfTheWeekResponse"
+        "400":
+          description: Unsupported game version
+  /v6/recordings:
+    get:
+      operationId: getLeaderboardRecordings
+      tags: [leaderboard]
+      summary: Fetch stored website leaderboard recordings
+      parameters:
+        - name: ids
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Requested recordings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  nullable: true
+                  $ref: "#/components/schemas/LeaderboardRecording"
+components:
+  parameters:
+    PolyTrackVersion:
+      name: version
+      in: query
+      required: true
+      schema:
+        type: string
+        enum: ["0.6.0-beta2", "0.6.3"]
+    TrackId:
+      name: trackId
+      in: query
+      required: true
+      schema:
+        type: string
+    Skip:
+      name: skip
+      in: query
+      required: true
+      schema:
+        type: integer
+        minimum: 0
+    Amount:
+      name: amount
+      in: query
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+    OnlyVerified:
+      name: onlyVerified
+      in: query
+      required: true
+      schema:
+        type: boolean
+    UserTokenHash:
+      name: userTokenHash
+      in: query
+      required: false
+      schema:
+        type: string
+  schemas:
+    IceServer:
+      type: object
+      required: [urls]
+      properties:
+        urls:
+          oneOf:
+            - type: string
+            - type: array
+              items: { type: string }
+        username: { type: string }
+        credential: { type: string }
+        credentialType: { type: string }
+    LeaderboardSubmission:
+      type: object
+      required:
+        - version
+        - userToken
+        - nickname
+        - carStyle
+        - trackId
+        - frames
+        - recording
+      properties:
+        version: { type: string }
+        userToken: { type: string }
+        nickname: { type: string, minLength: 1, maxLength: 32 }
+        countryCode: { type: string, nullable: true }
+        carStyle: { type: string }
+        trackId: { type: string }
+        frames: { type: integer, minimum: 1 }
+        recording: { type: string }
+        onlyVerified: { type: boolean }
+        replayBoostSettings:
+          type: string
+          description: JSON-encoded replay multipliers for boosted recordings only
+        normalPhysicsConfirmed:
+          type: boolean
+          description: Explicit confirmation that this new recording used normal physics
+    LeaderboardUploadResult:
+      type: object
+      required: [uploadId, previousPosition, newPosition]
+      properties:
+        uploadId: { type: integer, nullable: true }
+        previousPosition: { type: integer, minimum: 0 }
+        newPosition: { type: integer, minimum: 0 }
+    LeaderboardDeletion:
+      type: object
+      required: [userToken, trackId]
+      properties:
+        userToken: { type: string, minLength: 1, maxLength: 4096 }
+        trackId: { type: string, pattern: "^[a-f0-9]{64}$" }
+    LeaderboardDeletionResult:
+      type: object
+      required: [deletedRecords]
+      properties:
+        deletedRecords: { type: integer, minimum: 0 }
+    LeaderboardNicknameUpdate:
+      type: object
+      required: [userToken, nickname]
+      properties:
+        userToken: { type: string, minLength: 1, maxLength: 4096 }
+        nickname: { type: string, minLength: 1, maxLength: 32 }
+    LeaderboardNicknameUpdateResult:
+      type: object
+      required: [updatedRecords]
+      properties:
+        updatedRecords: { type: integer, minimum: 0 }
+    LeaderboardEntry:
+      type: object
+      required: [id, userId, nickname, frames, time, carStyle, verifiedState, countryCode]
+      properties:
+        id: { type: integer }
+        userId: { type: string }
+        nickname: { type: string }
+        frames: { type: integer, minimum: 1 }
+        time: { type: string, format: date-time }
+        carStyle: { type: string }
+        verifiedState: { type: integer, minimum: 0 }
+        countryCode: { type: string, nullable: true }
+    PolyTrackUserProfile:
+      type: object
+      required: [nickname, countryCode, carStyle, isVerifier]
+      properties:
+        nickname: { type: string, minLength: 1, maxLength: 50 }
+        countryCode: { type: string, nullable: true }
+        carStyle: { type: string }
+        isVerifier: { type: boolean }
+    TrackOfTheWeekResponse:
+      type: object
+      required: [serverTime, current]
+      properties:
+        serverTime: { type: string, format: date-time }
+        current:
+          nullable: true
+          $ref: "#/components/schemas/TrackOfTheWeekCurrent"
+    TrackOfTheWeekCurrent:
+      type: object
+      required:
+        [trackId, name, author, lastModified, environment, thumbnailUrl, coverUrl, trackUrl, endTime]
+      properties:
+        trackId: { type: string, pattern: "^[0-9a-f]{64}$", description: Stable ID of the selected community track. }
+        name: { type: string }
+        author: { type: string, nullable: true }
+        lastModified: { type: string, format: date-time, nullable: true }
+        environment: { type: integer, enum: [1, 2, 3] }
+        thumbnailUrl:
+          type: string
+          pattern: "^/main/tracks/community/thumbnails/.+\\.png$"
+          description: Thumbnail path for the selected track.
+        coverUrl: { type: string, nullable: true }
+        trackUrl:
+          type: string
+          pattern: "^/main/tracks/community/.+\\.track$"
+          description: Track path for the selected community track.
+        endTime: { type: string, format: date-time }
+    LeaderboardPage:
+      type: object
+      required: [total, entries, userEntry]
+      properties:
+        total: { type: integer, minimum: 0 }
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeaderboardEntry"
+        userEntry:
+          nullable: true
+          $ref: "#/components/schemas/LeaderboardUserEntry"
+    LeaderboardUserEntry:
+      type: object
+      required: [position, frames, id, hasReplayBoostSettings, hasConfirmedNormalPhysics]
+      properties:
+        position: { type: integer, minimum: 1 }
+        frames: { type: integer, minimum: 1 }
+        id: { type: integer }
+        hasReplayBoostSettings: { type: boolean }
+        hasConfirmedNormalPhysics: { type: boolean }
+    LeaderboardRecording:
+      type: object
+      required: [recording, verifiedState, frames, carStyle]
+      properties:
+        recording: { type: string }
+        verifiedState: { type: integer, minimum: 0 }
+        frames: { type: integer, minimum: 1 }
+        carStyle: { type: string }
+        replayBoostSettings:
+          $ref: "#/components/schemas/ReplayBoostSettings"
+        normalPhysicsConfirmed:
+          type: boolean
+    ReplayBoostSettings:
+      type: object
+      required: [accelerationMultiplier, brakingMultiplier, topSpeedMultiplier]
+      properties:
+        accelerationMultiplier: { type: number, minimum: 1, maximum: 2 }
+        brakingMultiplier: { type: number, minimum: 1, maximum: 2 }
+        topSpeedMultiplier: { type: number, minimum: 1, maximum: 2 }
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+

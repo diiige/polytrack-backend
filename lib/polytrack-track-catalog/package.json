@@ -1,0 +1,10 @@
+{
+  "name": "@workspace/polytrack-track-catalog",
+  "version": "0.0.0",
+  "description": "Shared metadata registry for bundled PolyTrack community tracks",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

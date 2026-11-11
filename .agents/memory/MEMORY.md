@@ -1,0 +1,19 @@
+- [Compiled worker boosts](compiled-worker-boosts.md) — replay status is private to the cheat menu during native Watch; physics tests need isolated track IDs and released keys.
+- [Worker track-part parity](polytrack-worker-track-part-parity.md) — new map part IDs must match in the main registry and physics worker enum/geometry.
+- [Polytrack PB preservation](polytrack-pb-preservation.md) — startup track-registry cleanup is not a safe reason to delete locally saved PBs.
+- [PolyTrack Cloudflare deployment](polytrack-cloudflare-deployment.md) — published Pages site is separate from Replit; workspace changes need its own deployment.
+- [Leaderboard test nicknames](polytrack-leaderboard-test-nicknames.md) — fixture nicknames must fit the API limit or successful uploads can appear under a truncated name.
+- [Leaderboard persistence](leaderboard-persistence.md) — published Autoscale instances cannot be trusted to retain file-backed leaderboard records.
+- [Polytrack startup readiness](polytrack-startup-readiness.md) — headless WebGL failure can surface a later-binding TDZ as a secondary error.
+- [Polytrack community imports](polytrack-community-imports.md) — preserve the original bundle/tracks while adding canonical community revisions without deleting PB storage.
+- [PolyTrack signaling order](polytrack-signaling-order.md) — serialize WebSocket messages per connection so immediate ICE candidates wait for async join-session setup.
+- [PolyTrack cross-instance checks](polytrack-cross-instance-signaling.md) — confirm join offers are accepted before diagnosing missing database-queued delivery.
+- [Polytrack browser drive checks](polytrack-browser-drive-verification.md) — require position change and absolute speed; reverse-oriented starts can report negative speed while moving.
+- [Polytrack leaderboard pagination tests](polytrack-leaderboard-pagination-tests.md) — seed list/pagination checks separately from real-driving and replay-integrity prerequisites.
+- [Polytrack SwiftShader UI tests](polytrack-swiftshader-ui-tests.md) — when ordinary preview lacks WebGL, use isolated SwiftShader/CDP browsers for real game flows.
+- [PolyTrack map PB deletion](polytrack-map-pb-deletion.md) — clear the target and disable deletion until that map’s leaderboard request supplies its ID.
+- [Polytrack TURN provider](polytrack-turn-provider.md) — a no-card Open Relay static-auth option is selected; its public shared secret is not a dedicated credential.
+- [PolyTrack published asset checks](polytrack-published-asset-checks.md) — compare the production HTML and scripts to workspace assets before changing a UI value that appears unchanged.
+- [PolyTrack UI test observers](polytrack-ui-test-observers.md) — enable mocked observers only in tests that need them to avoid unrelated startup watchers changing timer expectations.
+- [PolyTrack FPS layout performance](polytrack-fps-layout-performance.md) — HUD text can emit child-list mutations; FPS relocation must not turn those into per-frame layout scans.
+- [PolyTrack runtime performance](polytrack-runtime-performance.md) — retain the high-DPI render cap and decode only the matching car state in worker callbacks.
