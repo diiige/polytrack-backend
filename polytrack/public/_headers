@@ -1,0 +1,11 @@
+# The game uses WebAssembly and a SharedArrayBuffer-backed simulation worker.
+# Keep the Pages document and its same-origin assets cross-origin isolated.
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
+  Cross-Origin-Resource-Policy: same-origin
+
+/api/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS
+  Access-Control-Allow-Headers: Content-Type
