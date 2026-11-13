@@ -18,7 +18,7 @@ export async function onRequestGet(context) {
              CAST(frames AS INTEGER) as frames,
              COALESCE(car_style, 'default') as carStyle,
              COALESCE(country_code, '') as countryCode,
-             'verified' as verifiedState,
+             1 as verifiedState,
              ROW_NUMBER() OVER (PARTITION BY user_token_hash ORDER BY frames ASC) as rn
       FROM scores WHERE track_id = ?
     ) WHERE rn = 1
@@ -34,12 +34,19 @@ export async function onRequestGet(context) {
   let userEntry = null;
   if (userTokenHash) {
     userEntry = await context.env.DB.prepare(
-      `SELECT id, user_token_hash as userId, COALESCE(nickname, 'Anonymous') as nickname,
-              frames, recording, COALESCE(car_style, 'default') as carStyle,
-              COALESCE(country_code, '') as countryCode, 'verified' as verifiedState
-       FROM scores WHERE track_id = ? AND user_token_hash = ?
-       ORDER BY frames ASC LIMIT 1`
-    ).bind(trackId, userTokenHash).first();
+      `SELECT s.id as id, user_token_hash as userId,
+              COALESCE(s.nickname, 'Anonymous') as nickname,
+              CAST(s.frames AS INTEGER) as frames, s.recording,
+              COALESCE(s.car_style, 'default') as carStyle,
+              COALESCE(s.country_code, '') as countryCode,
+              1 as verifiedState,
+              (SELECT COUNT(*) FROM (
+                 SELECT MIN(frames) as best FROM scores
+                 WHERE track_id = ? GROUP BY user_token_hash
+               ) AS ranked WHERE ranked.best < s.frames) + 1 as position
+       FROM scores s WHERE s.track_id = ? AND s.user_token_hash = ?
+       ORDER BY s.frames ASC LIMIT 1`
+    ).bind(trackId, trackId, userTokenHash).first();
   }
 
   return Response.json({ 
