@@ -5,13 +5,9 @@ import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 import { mockupPreviewPlugin } from "./mockupPreviewPlugin";
 
-const rawPort = process.env.PORT;
-
-if (!rawPort) {
-  throw new Error(
-    "PORT environment variable is required but was not provided.",
-  );
-}
+// PORT is only used by the dev/preview servers, so it is not needed for `vite build`.
+// Fall back to the default preview port when it is not provided (e.g. in CI).
+const rawPort = process.env.PORT || "8081";
 
 const port = Number(rawPort);
 
@@ -19,13 +15,8 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-const basePath = process.env.BASE_PATH;
-
-if (!basePath) {
-  throw new Error(
-    "BASE_PATH environment variable is required but was not provided.",
-  );
-}
+// BASE_PATH defaults to the site root, which is where Netlify serves the build.
+const basePath = process.env.BASE_PATH || "/";
 
 export default defineConfig({
   base: basePath,
