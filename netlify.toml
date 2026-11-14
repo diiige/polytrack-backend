@@ -1,0 +1,14 @@
+[build]
+  # PolyTrack's frontend is prebuilt into polytrack/public; only the API needs deploying.
+  command = "echo 'PolyTrack static assets are prebuilt'"
+  publish = "polytrack/public"
+
+[[headers]]
+  for = "/*.glb"
+  [headers.values]
+    Content-Type = "model/gltf-binary"
+
+[[headers]]
+  for = "/*.wasm"
+  [headers.values]
+    Content-Type = "application/wasm"
